@@ -68,3 +68,21 @@ app.listen(port, () => {
 //   console.log(data);
 // }
 // myFunction();
+//playground for associating task router to user
+const Task = require('./models/task');
+const User = require('./models/user');
+const main = async()=>{
+  // const task = await Task.findById('5ff485d7b53d3c04864febbe');
+  // // const user = await User.findById('5ff47f1eb53d3c04864febbc');
+  // //the relationship between the models(User and Task above)scan be simplified by using Mongoose by providing one additional property in the task model owner field called ref. 
+  //We then add the populate method on the task to populate the associated owner field of that Task which in turn is related to the logged in User
+  // await task.populate('owner').execPopulate();
+  // console.log(task.owner);
+  // // console.log(user.name);
+
+  //Now lets go ahead and start with a user and find their associated task as opposed to what we did earlier. Here similar to what we did to the task by adding a ref field, we will add a virtual property for the user model, a virtual property is not a data stored in the db but a relationship between two entities - in this case between our user and task
+  const user = await User.findById('5ff47f1eb53d3c04864febbc');
+  await user.populate('tasks').execPopulate()
+  console.log(user.tasks);//this will console print an array with all associated tasks for the particular user
+}
+main();

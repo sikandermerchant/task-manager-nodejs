@@ -54,6 +54,15 @@ const userSchema = mongoose.Schema({
     }
   ]
 });
+
+//this allows us to add the virtual attributes for the model, we are not saving this in the mongoose document unlike adding ref to the owner property in task, but using it do define relationships with other models i.e User
+//The foreignField is the name of the field on Task(in this case i.e. on the relationship model) which links it to Task, which we set up to be the ownwer
+//the localField is where that data is stored locally, which the user's id(_id) in this case
+userSchema.virtual('tasks',{
+  ref: 'Task',
+  localField: '_id',
+  foreignField:'owner'
+})
 //Use method on individual documents if you want to manipulate the individual document like adding tokens etc. Use the statics approach if you want query the whole collection. Static methods are available on models (e.g User) whereas methods are available on instances (e.g. user)
 
 ///for below, please refer to playground for hiding private data

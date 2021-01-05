@@ -17,7 +17,9 @@ const Task = mongoose.model('Task',{
   },
   owner: {
     type:mongoose.Schema.Types.ObjectId,
-    required:true
+    required:true,
+    //This the reference to the User Model thus creating the relationship between the Task and the User models
+    ref:'User'
   }
 });
 module.exports = Task;
