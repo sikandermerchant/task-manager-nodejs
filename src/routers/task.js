@@ -3,7 +3,7 @@ const router = new express.Router();
 const auth = require('../middleware/auth')
 const Task = require('../models/task');
 
-//Create new task
+//Create new task for the logged in user
 router.post("/tasks", auth, async (req, res) => {
   ///Create an instance of task
   // const task = new Task(req.body);
@@ -19,19 +19,31 @@ router.post("/tasks", auth, async (req, res) => {
     res.status(400).send(e);
   }
 });
-
-router.get("/tasks", async (req, res) => {
+//Get all tasks for logged in user
+router.get("/tasks", auth,async (req, res) => {
   try {
-    const tasks = await Task.find({});
-    res.send(tasks);
+    // const tasks = await Task.find({
+    // owner:req.user._id});
+    //res.send(tasks);
+    //alternate to the above using populate method
+    await req.user.populate('tasks').execPopulate();
+    res.send(req.user.tasks);
   } catch (e) {
     res.sendStatus(500).send();
   }
 });
-router.get("/tasks/:id", async (req, res) => {
+
+//fetch a task by id for logged in user
+router.get("/tasks/:id", auth, async (req, res) => {
   const _id = req.params.id;
   try {
-    const task = await Task.findById(_id);
+    //the below is used when user is not authenticated by auth
+    // const task = await Task.findById(_id);
+    ///we use this when auth is used
+    const task = await Task.findOne({
+      _id,
+      owner:req.user._id
+    })
     if (!task) {
       return res.sendStatus(404).send();
     }
@@ -42,7 +54,8 @@ router.get("/tasks/:id", async (req, res) => {
   console.log(req.params);
 });
 
-router.patch('/tasks/:id', async (req, res) => {
+///Update a task by id for the logged in user
+router.patch('/tasks/:id', auth, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ['description', 'completed'];
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
@@ -54,9 +67,10 @@ router.patch('/tasks/:id', async (req, res) => {
   }
   const _id = req.params.id;
   try {
-    const task = await Task.findById(_id);
-    updates.forEach((update) => task[update] = req.body[update]);
-    await task.save();
+    // const task = await Task.findById(_id);
+    //the below is used when the user is authenticated
+    const task = await Task.findOne({_id, owner: req.user._id})
+
     // const task = await Task.findByIdAndUpdate(_id, req.body, {
     //   new: true,
     //   runValidators: true
@@ -67,16 +81,19 @@ router.patch('/tasks/:id', async (req, res) => {
         error: 'No task found'
       });
     }
+    updates.forEach((update) => task[update] = req.body[update]);
+    await task.save();
     res.send(task)
   } catch (e) {
     res.status(400).send(e)
   }
 })
 
-router.delete('/tasks/:id', async (req, res) => {
+///Delete task by id for logged in user
+router.delete('/tasks/:id', auth, async (req, res) => {
   const _id = req.params.id
   try {
-    const task = await Task.findByIdAndDelete(_id);
+    const task = await Task.findOneAndDelete({_id,owner:req.user._id});
     if (!task) {
       return res.status(404).send({
         error: 'Task not found'
